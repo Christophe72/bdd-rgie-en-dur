@@ -16,12 +16,21 @@ type RgieArticle = {
   mots_cles?: string[];
 };
 
+type TodoStep = {
+  id: string;
+  label: string;
+  done: boolean;
+};
+
 const normalize = (value: string) =>
   value
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
+
+const BRAND_NAME = "Webelec";
+const BRAND_DOMAIN = "webelec.be";
 
 export default function RgieSearchClient() {
   const router = useRouter();
@@ -50,6 +59,8 @@ export default function RgieSearchClient() {
     references: Array<RgieArticle & { score: number }>;
   } | null>(null);
   const [selectedItem, setSelectedItem] = useState<RgieArticle | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [todoSteps, setTodoSteps] = useState<TodoStep[]>([]);
   const normalizedQuery = normalize(query);
 
   useEffect(() => {
@@ -115,9 +126,11 @@ export default function RgieSearchClient() {
   const verifierTache = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setNoviceGuide(null);
+    setPdfError(null);
 
     const description = taskInput.trim();
     if (description.length < 10) {
+      setTodoSteps([]);
       setTaskCheck({
         verdict: "a_preciser",
         message:
@@ -189,6 +202,55 @@ export default function RgieSearchClient() {
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
 
+    const todoFromCheck: TodoStep[] = [
+      {
+        id: "todo-1",
+        label:
+          "Sécuriser l'intervention: couper l'alimentation et vérifier l'absence de tension.",
+        done: false,
+      },
+      {
+        id: "todo-2",
+        label: taskSection
+          ? `Valider la section des conducteurs (${taskSection}) selon le circuit.`
+          : "Valider la section des conducteurs selon le circuit à réaliser.",
+        done: false,
+      },
+      {
+        id: "todo-3",
+        label: taskProtection
+          ? `Contrôler la protection prévue (${taskProtection}) et son emplacement au tableau.`
+          : "Définir/contrôler la protection (DDR/disjoncteur) avant raccordement.",
+        done: false,
+      },
+      {
+        id: "todo-4",
+        label:
+          "Raccorder phase, neutre et terre dans l'ordre, puis vérifier serrage et repérage.",
+        done: false,
+      },
+      {
+        id: "todo-5",
+        label:
+          "Effectuer les contrôles finaux: continuité terre, isolement, test protections et conformité locale.",
+        done: false,
+      },
+    ];
+
+    if (scored.length > 0) {
+      const refs = scored
+        .slice(0, 3)
+        .map((item) => item.id)
+        .join(", ");
+      todoFromCheck.splice(3, 0, {
+        id: "todo-rgie",
+        label: `Vérifier les articles RGIE prioritaires: ${refs}.`,
+        done: false,
+      });
+    }
+
+    setTodoSteps(todoFromCheck);
+
     if (scored.length === 0) {
       setTaskCheck({
         verdict: "a_preciser",
@@ -231,6 +293,22 @@ export default function RgieSearchClient() {
             : "Des points de vigilance existent; contrôlez les articles proposés avant validation.",
       matches: scored,
     });
+  };
+
+  const toggleTodoStep = (index: number) => {
+    setTodoSteps((previous) =>
+      previous.map((step, i) => {
+        if (i !== index) {
+          return step;
+        }
+
+        if (i > 0 && !previous[i - 1].done) {
+          return step;
+        }
+
+        return { ...step, done: !step.done };
+      }),
+    );
   };
 
   const recommandations = (importance: string) => {
@@ -363,6 +441,259 @@ export default function RgieSearchClient() {
     });
   };
 
+  const exporterGuidePdf = async () => {
+    if (!taskCheck || !noviceGuide) {
+      return;
+    }
+
+    try {
+      setPdfError(null);
+      const { jsPDF } = await import("jspdf");
+      const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+      const marginLeft = 15;
+      const marginRight = 15;
+      const pageWidth = 210;
+      const maxWidth = pageWidth - marginLeft - marginRight;
+      const pageHeight = 297;
+      const bottomMargin = 18;
+      let cursorY = 18;
+      let currentPage = 1;
+
+      const colors = {
+        primary: [30, 64, 175] as const,
+        accent: [14, 116, 144] as const,
+        text: [31, 41, 55] as const,
+        muted: [100, 116, 139] as const,
+        light: [241, 245, 249] as const,
+        border: [203, 213, 225] as const,
+        ok: [22, 101, 52] as const,
+        warn: [161, 98, 7] as const,
+        neutral: [71, 85, 105] as const,
+      };
+
+      const now = new Date();
+      const dateText = now.toLocaleDateString("fr-BE");
+      const reportId = `RGIE-${now.toISOString().slice(0, 10)}-${now
+        .toTimeString()
+        .slice(0, 8)
+        .replace(/:/g, "")}`;
+
+      const cleanPdfText = (text: string) =>
+        text
+          .replace(/[’`]/g, "'")
+          .replace(/[“”]/g, '"')
+          .replace(/[–—]/g, "-")
+          .replace(/•/g, "-")
+          .replace(/[^\x20-\x7E\xA0-\xFF]/g, " ");
+
+      const addPageBranding = (pageCurrent: number, pageCount: number) => {
+        doc.setFillColor(...colors.primary);
+        doc.rect(0, 0, pageWidth, 14, "F");
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        doc.setTextColor(255, 255, 255);
+        doc.text(`${BRAND_NAME} - ${BRAND_DOMAIN}`, marginLeft, 9.5);
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.text(
+          cleanPdfText(`Rapport: ${reportId}`),
+          pageWidth - marginRight,
+          9.5,
+          {
+            align: "right",
+          },
+        );
+
+        doc.setDrawColor(...colors.border);
+        doc.line(marginLeft, 287, pageWidth - marginRight, 287);
+
+        doc.setTextColor(...colors.muted);
+        doc.text(
+          cleanPdfText(`Page ${pageCurrent}/${pageCount}`),
+          pageWidth - marginRight,
+          292,
+          {
+            align: "right",
+          },
+        );
+        doc.text("Assistant RGIE - usage informatif", marginLeft, 292);
+      };
+
+      addPageBranding(1, 1);
+
+      const ensureSpace = (needed = 8) => {
+        if (cursorY + needed > pageHeight - bottomMargin) {
+          doc.addPage();
+          currentPage += 1;
+          cursorY = 18;
+          addPageBranding(currentPage, currentPage);
+        }
+      };
+
+      const addTitle = (text: string) => {
+        ensureSpace(12);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(17);
+        doc.setTextColor(...colors.primary);
+        doc.text(cleanPdfText(text), marginLeft, cursorY);
+        cursorY += 8;
+      };
+
+      const addHeading = (text: string) => {
+        ensureSpace(12);
+        doc.setFillColor(...colors.light);
+        doc.setDrawColor(...colors.border);
+        doc.rect(marginLeft, cursorY - 4.8, maxWidth, 7.5, "FD");
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11.5);
+        doc.setTextColor(...colors.accent);
+        doc.text(cleanPdfText(text), marginLeft, cursorY);
+        cursorY += 7.5;
+      };
+
+      const addParagraph = (text: string) => {
+        const lines = doc.splitTextToSize(cleanPdfText(text), maxWidth);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(...colors.text);
+        for (const line of lines) {
+          ensureSpace(5);
+          doc.text(line, marginLeft, cursorY);
+          cursorY += 4.8;
+        }
+        cursorY += 1;
+      };
+
+      const addBullets = (items: string[]) => {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(...colors.text);
+        for (const item of items) {
+          const lines = doc.splitTextToSize(cleanPdfText(item), maxWidth - 6);
+          ensureSpace(lines.length * 5 + 2);
+          doc.setTextColor(...colors.accent);
+          doc.text("•", marginLeft, cursorY);
+          doc.setTextColor(...colors.text);
+          doc.text(lines, marginLeft + 4, cursorY);
+          cursorY += lines.length * 4.8 + 1;
+        }
+        cursorY += 1;
+      };
+
+      const addNumbered = (items: string[]) => {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(...colors.text);
+        items.forEach((item, index) => {
+          const prefix = `${index + 1}.`;
+          const lines = doc.splitTextToSize(cleanPdfText(item), maxWidth - 8);
+          ensureSpace(lines.length * 5 + 2);
+          doc.setTextColor(...colors.accent);
+          doc.text(prefix, marginLeft, cursorY);
+          doc.setTextColor(...colors.text);
+          doc.text(lines, marginLeft + 6, cursorY);
+          cursorY += lines.length * 4.8 + 1;
+        });
+        cursorY += 1;
+      };
+
+      const addVerdictBadge = () => {
+        const verdictLabel =
+          taskCheck.verdict === "plutot_ok"
+            ? "Verdict: plutôt OK"
+            : taskCheck.verdict === "attention"
+              ? "Verdict: attention"
+              : "Verdict: à préciser";
+
+        const badgeColor =
+          taskCheck.verdict === "plutot_ok"
+            ? colors.ok
+            : taskCheck.verdict === "attention"
+              ? colors.warn
+              : colors.neutral;
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        const text = cleanPdfText(verdictLabel);
+        const width = doc.getTextWidth(text) + 8;
+        const [badgeR, badgeG, badgeB] = badgeColor;
+
+        ensureSpace(8);
+        doc.setFillColor(badgeR, badgeG, badgeB);
+        doc.setDrawColor(badgeR, badgeG, badgeB);
+        doc.rect(marginLeft, cursorY - 4.5, width, 6.5, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.text(text, marginLeft + 4, cursorY);
+        cursorY += 8;
+      };
+
+      addTitle(`${BRAND_NAME} - Rapport RGIE Assistant novice`);
+      addParagraph(`Date: ${dateText}`);
+      addParagraph(`Référence rapport: ${reportId}`);
+      addVerdictBadge();
+      addParagraph(`Message: ${taskCheck.message}`);
+
+      addHeading("Tâche saisie");
+      addParagraph(taskInput || "(non précisée)");
+
+      addHeading("Contexte déclaré");
+      addBullets([
+        `Local: ${taskLieu || "non précisé"}`,
+        `Protection: ${taskProtection || "non précisée"}`,
+        `Section câble: ${taskSection || "non précisée"}`,
+      ]);
+
+      addHeading("Reformulation simple");
+      addParagraph(noviceGuide.reformulation);
+
+      addHeading("Explication pour débutant");
+      addParagraph(noviceGuide.explication);
+
+      addHeading("Étapes conseillées");
+      addBullets(noviceGuide.etapes);
+
+      addHeading("Comment raccorder (ordre conseillé)");
+      addNumbered(noviceGuide.raccordement);
+
+      addHeading("Checklist de vérification complète");
+      addBullets(noviceGuide.checklist);
+
+      if (noviceGuide.vigilances.length > 0) {
+        addHeading("Points de vigilance");
+        addBullets(noviceGuide.vigilances);
+      }
+
+      addHeading("Références RGIE utilisées");
+      addBullets(
+        noviceGuide.references.map(
+          (item) => `${item.id} — ${item.titre} (${item.importance})`,
+        ),
+      );
+
+      addParagraph(
+        "Note: ce rapport assiste la préparation et le contrôle. Il ne remplace pas une vérification réglementaire sur site par un professionnel qualifié.",
+      );
+
+      const pageTotal = doc.getNumberOfPages();
+      for (let page = 1; page <= pageTotal; page += 1) {
+        doc.setPage(page);
+        currentPage = page;
+        addPageBranding(page, pageTotal);
+      }
+
+      const fileDate = now.toISOString().slice(0, 10);
+      doc.save(`rapport-rgie-${BRAND_DOMAIN}-${fileDate}.pdf`);
+    } catch (error) {
+      console.error("Erreur export PDF", error);
+      setPdfError(
+        "Erreur lors de l'export PDF. Réessayez après avoir régénéré le guide IA.",
+      );
+    }
+  };
+
   return (
     <main className="mx-auto max-w-230 p-4 md:p-6">
       <section className="rounded-2xl border border-neutral-200 p-5">
@@ -476,6 +807,46 @@ export default function RgieSearchClient() {
               {taskCheck.message}
             </p>
 
+            {todoSteps.length > 0 && (
+              <div className="mt-4 rounded-lg border border-neutral-200 p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold">
+                    Todo liste de travail (ordre conseillé)
+                  </p>
+                  <span className="text-xs text-neutral-500">
+                    {todoSteps.filter((step) => step.done).length}/
+                    {todoSteps.length}
+                  </span>
+                </div>
+                <div className="grid gap-2">
+                  {todoSteps.map((step, index) => {
+                    const blocked = index > 0 && !todoSteps[index - 1].done;
+                    return (
+                      <label
+                        key={step.id}
+                        className={`flex items-start gap-2 rounded-md border px-2.5 py-2 text-sm ${blocked ? "border-neutral-200 opacity-60" : "border-neutral-300"}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={step.done}
+                          disabled={blocked}
+                          onChange={() => toggleTodoStep(index)}
+                          className="mt-0.5"
+                        />
+                        <span
+                          className={
+                            step.done ? "line-through text-neutral-500" : ""
+                          }
+                        >
+                          {index + 1}. {step.label}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {taskCheck.matches.length > 0 && (
               <div className="mt-3 grid gap-2">
                 <p className="text-sm font-semibold">
@@ -518,6 +889,21 @@ export default function RgieSearchClient() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
                   Assistant IA guidé par la base RGIE
                 </p>
+
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={exporterGuidePdf}
+                    className="rounded-[10px] border border-neutral-300 px-4 py-2 text-sm font-medium"
+                  >
+                    Exporter en PDF
+                  </button>
+                  {pdfError && (
+                    <p className="mt-2 text-sm text-neutral-700 dark:text-neutral-300">
+                      {pdfError}
+                    </p>
+                  )}
+                </div>
 
                 <h3 className="mt-2 font-semibold">Reformulation simple</h3>
                 <p className="mt-1 text-sm text-neutral-700 dark:text-neutral-300">
