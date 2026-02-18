@@ -1853,8 +1853,10 @@ export const niveauxImportance = {
   moyenne: "Bonne pratique - Recommandé pour conformité",
 };
 
-export default {
+const rgieData = {
   rgieArticles,
   categories,
   niveauxImportance,
 };
+
+export default rgieData;
