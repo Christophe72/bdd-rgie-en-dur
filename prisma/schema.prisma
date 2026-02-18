@@ -1,0 +1,226 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ------------------------------------------------------------
+// ENUMS GENERAUX
+// ------------------------------------------------------------
+
+enum StatutChantier {
+  A_DEVISER
+  DEVIS_ENVOYE
+  ACCEPTE
+  EN_COURS
+  EN_ATTENTE_FOURNISSEUR
+  EN_ATTENTE_PAIEMENT
+  CLOTURE
+}
+
+enum EtatElement {
+  PREVU
+  EN_COURS
+  TERMINE
+  NON_CONFORME
+  CONFORME
+}
+
+enum TypeCircuit {
+  ECLAIRAGE
+  PRISES
+  MIXTE
+  FOUR
+  TAQUE
+  MACHINE_LAVER
+  SECHOIR
+  CHAUFFE_EAU
+  POMPE
+  BORNE_RECHARGE
+  TABLEAU
+  AUTRE
+}
+
+enum TypeInstallation {
+  RESIDENTIEL
+  TERTIAIRE
+  INDUSTRIEL
+}
+
+enum StatutDevis {
+  BROUILLON
+  ENVOYE
+  ACCEPTE
+  REFUSE
+  EXPIRE
+}
+
+enum StatutDiagnostic {
+  EN_ATTENTE
+  EN_COURS
+  TERMINE
+  BLOQUANT
+}
+
+enum StatutRgie {
+  CONFORME
+  NON_CONFORME
+  AVERTISSEMENT
+}
+
+enum TypeProtection {
+  DISJONCTEUR
+  DIFFERENTIEL
+  FUSIBLE
+}
+
+enum CourbeDisjoncteur {
+  B
+  C
+  D
+}
+
+enum TypeDifferentiel {
+  AC
+  A
+  F
+  B
+}
+
+// ------------------------------------------------------------
+// MODELS CRUD
+// ------------------------------------------------------------
+
+/// Client : particulier ou societe commanditaire d'un dossier
+model Client {
+  id        String    @id @default(cuid())
+  nom       String
+  prenom    String?
+  email     String?   @unique
+  telephone String?
+  adresse   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  dossiers  Dossier[]
+}
+
+/// Dossier : point d'entree de toute intervention electrique
+model Dossier {
+  id               String              @id @default(cuid())
+  reference        String              @unique
+  titre            String
+  typeInstallation TypeInstallation
+  statut           StatutChantier      @default(A_DEVISER)
+  description      String?
+  adresseChantier  String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  clientId         String
+  client           Client              @relation(fields: [clientId], references: [id])
+
+  chantier         Chantier?
+  devis            Devis[]
+  diagnostics      Diagnostic[]
+  circuits         Circuit[]
+  pointsControle   PointControleRgie[]
+}
+
+/// Chantier : detail operationnel des travaux d'un dossier
+model Chantier {
+  id          String      @id @default(cuid())
+  etat        EtatElement @default(PREVU)
+  dateDebut   DateTime?
+  dateFin     DateTime?
+  responsable String?
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  dossierId   String      @unique
+  dossier     Dossier     @relation(fields: [dossierId], references: [id])
+}
+
+/// Devis commercial lie a un dossier
+model Devis {
+  id             String      @id @default(cuid())
+  numero         String      @unique
+  statut         StatutDevis @default(BROUILLON)
+  montantHT      Decimal     @db.Decimal(10, 2)
+  tva            Decimal     @default(21) @db.Decimal(5, 2)
+  montantTTC     Decimal     @db.Decimal(10, 2)
+  dateEmission   DateTime?
+  dateExpiration DateTime?
+  notes          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  dossierId      String
+  dossier        Dossier     @relation(fields: [dossierId], references: [id])
+}
+
+/// Diagnostic technique realise sur site
+model Diagnostic {
+  id           String           @id @default(cuid())
+  statut       StatutDiagnostic @default(EN_ATTENTE)
+  observations String?
+  conclusions  String?
+  realiseAt    DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  dossierId    String
+  dossier      Dossier          @relation(fields: [dossierId], references: [id])
+}
+
+/// Circuit electrique d'une installation
+model Circuit {
+  id          String      @id @default(cuid())
+  nom         String
+  type        TypeCircuit
+  etat        EtatElement @default(PREVU)
+  amperage    Int?
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  dossierId   String
+  dossier     Dossier     @relation(fields: [dossierId], references: [id])
+
+  protections Protection[]
+}
+
+/// Protection electrique (disjoncteur, differentiel, fusible)
+model Protection {
+  id          String             @id @default(cuid())
+  type        TypeProtection
+  calibre     Int
+  courbe      CourbeDisjoncteur?
+  typeDiff    TypeDifferentiel?
+  sensibilite Int?
+  marque      String?
+  reference   String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  circuitId   String
+  circuit     Circuit            @relation(fields: [circuitId], references: [id])
+}
+
+/// Point de controle RGIE rattache a un dossier
+model PointControleRgie {
+  id          String     @id @default(cuid())
+  articleRgie String
+  libelle     String
+  statut      StatutRgie
+  observation String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  dossierId   String
+  dossier     Dossier    @relation(fields: [dossierId], references: [id])
+}

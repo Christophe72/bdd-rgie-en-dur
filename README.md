@@ -1,36 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+@startuml
+title Outil Métier - Gestion Chantier (Core Domain Model)
 
-## Getting Started
+skinparam classAttributeIconSize 0
 
-First, run the development server:
+' =========================
+' ENUMS
+' =========================
+enum Role {
+  ADMIN
+  TECHNICIEN
+}
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+enum StatutChantier {
+  EN_COURS
+  TERMINE
+  SUSPENDU
+}
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+enum StatutDevis {
+  BROUILLON
+  ENVOYE
+  ACCEPTE
+  REFUSE
+}
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+enum StatutFacture {
+  EN_ATTENTE
+  PAYEE
+}
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+' =========================
+' ENTITES
+' =========================
 
-## Learn More
+class Societe {
+  +id: UUID
+  nom: String
+  tva: String
+  adresse: String
+  createdAt: DateTime
+}
 
-To learn more about Next.js, take a look at the following resources:
+class Utilisateur {
+  +id: UUID
+  email: String
+  passwordHash: String
+  role: Role
+  societeId: UUID
+}
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+class Client {
+  +id: UUID
+  nom: String
+  adresse: String
+  email: String
+  telephone: String
+  societeId: UUID
+}
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+class Chantier {
+  +id: UUID
+  titre: String
+  description: String
+  statut: StatutChantier
+  clientId: UUID
+  createdAt: DateTime
+}
 
-## Deploy on Vercel
+class Intervention {
+  +id: UUID
+  date: Date
+  dureeHeures: Decimal
+  description: String
+  chantierId: UUID
+  technicienId: UUID
+}
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+class Devis {
+  +id: UUID
+  numero: String
+  montantHT: Decimal
+  statut: StatutDevis
+  chantierId: UUID
+}
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+class Facture {
+  +id: UUID
+  numero: String
+  montantHT: Decimal
+  statut: StatutFacture
+  dateEmission: Date
+  devisId: UUID
+}
+
+' =========================
+' RELATIONS
+' =========================
+
+Societe "1" -- "0..*" Utilisateur
+Societe "1" -- "0..*" Client
+Client "1" -- "0..*" Chantier
+Chantier "1" -- "0..*" Intervention
+Chantier "1" -- "0..*" Devis
+Devis "1" -- "0..1" Facture
+Utilisateur "1" -- "0..*" Intervention
+
+@enduml
