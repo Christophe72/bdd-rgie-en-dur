@@ -455,9 +455,9 @@ export default function RgieSearchClient() {
       const marginRight = 15;
       const pageWidth = 210;
       const maxWidth = pageWidth - marginLeft - marginRight;
-      const pageHeight = 297;
-      const bottomMargin = 18;
-      let cursorY = 18;
+      const contentBottomY = 278;
+      const pageTopY = 20;
+      let cursorY = pageTopY;
       let currentPage = 1;
 
       const colors = {
@@ -525,10 +525,10 @@ export default function RgieSearchClient() {
       addPageBranding(1, 1);
 
       const ensureSpace = (needed = 8) => {
-        if (cursorY + needed > pageHeight - bottomMargin) {
+        if (cursorY + needed > contentBottomY) {
           doc.addPage();
           currentPage += 1;
-          cursorY = 18;
+          cursorY = pageTopY;
           addPageBranding(currentPage, currentPage);
         }
       };
@@ -559,12 +559,17 @@ export default function RgieSearchClient() {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
         doc.setTextColor(...colors.text);
+
+        const lineHeight = 4.8;
+        const paragraphPadding = 1;
+        const neededHeight = lines.length * lineHeight + paragraphPadding;
+        ensureSpace(neededHeight);
+
         for (const line of lines) {
-          ensureSpace(5);
           doc.text(line, marginLeft, cursorY);
-          cursorY += 4.8;
+          cursorY += lineHeight;
         }
-        cursorY += 1;
+        cursorY += paragraphPadding;
       };
 
       const addBullets = (items: string[]) => {
@@ -573,7 +578,7 @@ export default function RgieSearchClient() {
         doc.setTextColor(...colors.text);
         for (const item of items) {
           const lines = doc.splitTextToSize(cleanPdfText(item), maxWidth - 6);
-          ensureSpace(lines.length * 5 + 2);
+          ensureSpace(lines.length * 5 + 3);
           doc.setTextColor(...colors.accent);
           doc.text("•", marginLeft, cursorY);
           doc.setTextColor(...colors.text);
@@ -590,7 +595,7 @@ export default function RgieSearchClient() {
         items.forEach((item, index) => {
           const prefix = `${index + 1}.`;
           const lines = doc.splitTextToSize(cleanPdfText(item), maxWidth - 8);
-          ensureSpace(lines.length * 5 + 2);
+          ensureSpace(lines.length * 5 + 3);
           doc.setTextColor(...colors.accent);
           doc.text(prefix, marginLeft, cursorY);
           doc.setTextColor(...colors.text);
