@@ -27,16 +27,16 @@ html[data-theme="light"] {
 }
 
 html[data-theme="dark"] {
-  --background: #0b0c0f;
-  --foreground: #ededed;
-  --page-bg: #0b0c0f;
-  --surface: #14161b;
-  --panel: #1a1d22;
-  --ink: #f1f2f4;
-  --muted: #a4a7b0;
-  --accent: #ff8a4c;
-  --accent-2: #54d1b3;
-  --ring: rgba(84, 209, 179, 0.4);
+  --background: #080a0e;
+  --foreground: #e8eaf0;
+  --page-bg: #080a0e;
+  --surface: #131720;   /* +niveau 1 : cartes principales */
+  --panel:   #1f2534;   /* +niveau 2 : panels intérieurs, hover, inputs */
+  --ink:     #eceef4;
+  --muted:   #8f95a8;   /* plus foncé que ink, lisible mais discret */
+  --accent:  #ff844a;
+  --accent-2:#3ecfb2;
+  --ring: rgba(62, 207, 178, 0.45);
 }
 
 @theme inline {
@@ -48,16 +48,16 @@ html[data-theme="dark"] {
 
 @media (prefers-color-scheme: dark) {
   html:not([data-theme]) {
-    --background: #0b0c0f;
-    --foreground: #ededed;
-    --page-bg: #0b0c0f;
-    --surface: #14161b;
-    --panel: #1a1d22;
-    --ink: #f1f2f4;
-    --muted: #a4a7b0;
-    --accent: #ff8a4c;
-    --accent-2: #54d1b3;
-    --ring: rgba(84, 209, 179, 0.4);
+    --background: #080a0e;
+    --foreground: #e8eaf0;
+    --page-bg: #080a0e;
+    --surface: #131720;
+    --panel:   #1f2534;
+    --ink:     #eceef4;
+    --muted:   #8f95a8;
+    --accent:  #ff844a;
+    --accent-2:#3ecfb2;
+    --ring: rgba(62, 207, 178, 0.45);
   }
 }
 
