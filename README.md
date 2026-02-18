@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MVP RGIE pour PWA Next.js
 
-## Getting Started
+Ce dossier contient un kit minimal pour exploiter `rgieData.js` dans une app Next.js (App Router) avec mode PWA.
 
-First, run the development server:
+## Fichiers
+
+- `app/api/rgie/search/route.ts`: endpoint de recherche RGIE
+- `app/rgie/page.tsx`: page de recherche (liste + cartes courtes)
+- `app/rgie/[id]/page.tsx`: page détail d’un article
+- `next.config.js`: configuration `next-pwa`
+
+## Intégration rapide
+
+1. Dans ton projet Next.js, installe la dépendance:
+
+```bash
+npm i next-pwa
+```
+
+2. Copie ces fichiers en gardant la même arborescence.
+
+3. Adapte les imports de données selon ton projet:
+
+- Dans `route.ts` et `[id]/page.tsx`, l’import actuel pointe vers:
+  - `../../../../data/rgieData.js`
+
+4. Lance ton app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Ouvre:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `/rgie` pour la recherche
+- `/rgie/[id]` pour le détail
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Notes
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Le champ `explication_profane_mobile` est utilisé pour les cartes compactes.
+- Le champ `explication_profane` est utilisé pour l’explication complète.
+- Pour de meilleures performances, tu peux pré-générer un JSON RGIE dédié côté Next.
