@@ -1,98 +1,140 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const quickLinks = [
-  { id: "4.2.2", label: "Protection contact direct" },
-  { id: "5.1.1", label: "Calibre des protections" },
-  { id: "6.4.5.1", label: "Résistance d'isolement" },
+const highlights = [
+  {
+    title: "Recherche RGIE instantanee",
+    description: "Accede aux prescriptions, schemas et references en un clic.",
+  },
+  {
+    title: "Tableau de bord equipe",
+    description: "Suis les dossiers en cours et les controles prioritaires.",
+  },
+  {
+    title: "Historique unifie",
+    description: "Centralise les demandes et les decisions techniques.",
+  },
 ];
 
 export default function Home() {
-  const [search, setSearch] = useState(() => {
-    if (typeof window !== "undefined") {
-      const lastSearch = window.localStorage.getItem("rgie:last-search");
-      return lastSearch || "";
-    }
-    return "";
-  });
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("rgie:last-search", search.trim());
-    }
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    router.push("/accueil");
   };
 
   return (
-    <main className="mx-auto max-w-230 p-4 md:p-6">
-      <section className="rounded-2xl border border-neutral-200 p-5 md:p-6">
-        <p className="text-xs uppercase tracking-wide text-neutral-500">
-          Base documentaire
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold md:text-4xl">BDD RGIE</h1>
-        <p className="mt-2 text-neutral-600">
-          Accès rapide aux prescriptions, explications et recommandations.
-        </p>
-      </section>
+    <main className="relative min-h-screen overflow-hidden px-4 py-10 md:py-16">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,_rgba(226,107,44,0.22),_transparent_70%)] blur-2xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute bottom-0 right-0 h-72 w-72 translate-x-1/4 rounded-full bg-[radial-gradient(circle,_rgba(31,127,106,0.25),_transparent_70%)] blur-3xl"
+      />
 
-      <section className="mt-5 rounded-2xl border border-neutral-200 p-5">
-        <form
-          action="/rgie"
-          method="get"
-          className="grid gap-2"
-          onSubmit={handleSubmit}
-        >
-          <label htmlFor="home-search" className="text-sm font-medium">
-            Recherche rapide
-          </label>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <input
-              id="home-search"
-              name="q"
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Ex: différentiel, salle de bain, 4.2.1"
-              className="w-full rounded-[10px] border border-neutral-300 px-3 py-2"
-            />
-            <button
-              type="submit"
-              className="rounded-[10px] border border-neutral-300 px-4 py-2 font-medium"
-            >
-              Rechercher
-            </button>
-          </div>
-        </form>
-      </section>
-
-      <section className="mt-4 grid gap-3">
-        <Link
-          href="/rgie"
-          className="block rounded-xl border border-neutral-200 p-4 no-underline transition hover:border-neutral-400"
-        >
-          <p className="text-sm font-semibold">Rechercher dans la BDD RGIE</p>
-          <p className="mt-1.5 text-sm text-neutral-600">
-            Ouvrir la recherche par mots-clés, catégorie ou référence.
-          </p>
-        </Link>
-      </section>
-
-      <h2 className="mt-8 text-xl font-semibold">Articles rapides</h2>
-      <section className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {quickLinks.map((link) => (
-          <Link
-            key={link.id}
-            href={`/rgie/${link.id}`}
-            className="rounded-xl border border-neutral-200 p-4 transition hover:border-neutral-400"
-          >
-            <p className="text-xs font-medium text-neutral-500">
-              Article {link.id}
+      <div className="relative mx-auto grid w-full max-w-6xl items-stretch gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <section className="fade-up flex flex-col justify-between gap-8 rounded-[28px] border border-black/10 bg-[color:var(--panel)] p-8 shadow-[0_30px_80px_-50px_rgba(20,18,15,0.5)]">
+          <div className="space-y-4">
+            <span className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[color:var(--muted)]">
+              BDD RGIE Pro
+            </span>
+            <h1 className="text-4xl font-semibold leading-tight text-[color:var(--ink)] md:text-5xl">
+              Connecte-toi pour piloter les dossiers RGIE.
+            </h1>
+            <p className="max-w-xl text-base text-[color:var(--muted)] md:text-lg">
+              Un espace unique pour consulter les prescriptions, coordonner les
+              equipes et preparer les controles en atelier.
             </p>
-            <p className="mt-1 font-semibold">{link.label}</p>
-          </Link>
-        ))}
-      </section>
+          </div>
+
+          <div className="grid gap-4">
+            {highlights.map((item) => (
+              <div
+                key={item.title}
+                className="flex flex-col gap-1 rounded-2xl border border-black/10 bg-white/70 p-4"
+              >
+                <p className="text-sm font-semibold text-[color:var(--ink)]">
+                  {item.title}
+                </p>
+                <p className="text-sm text-[color:var(--muted)]">
+                  {item.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="fade-up fade-delay-1 flex flex-col justify-center">
+          <div className="rounded-[28px] border border-black/10 bg-[color:var(--surface)] p-8 shadow-[0_28px_80px_-50px_rgba(0,0,0,0.55)]">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[color:var(--muted)]">
+                Acces securise
+              </p>
+              <h2 className="text-3xl font-semibold text-[color:var(--ink)]">
+                Connexion
+              </h2>
+              <p className="text-sm text-[color:var(--muted)]">
+                Utilise tes identifiants metier pour ouvrir le tableau de bord.
+              </p>
+            </div>
+
+            <form className="mt-6 grid gap-4" onSubmit={handleSubmit}>
+              <label className="grid gap-2 text-sm font-medium text-[color:var(--ink)]">
+                Email professionnel
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="prenom.nom@entreprise.fr"
+                  className="h-11 rounded-xl border border-black/10 bg-white px-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-[color:var(--ring)]"
+                />
+              </label>
+              <label className="grid gap-2 text-sm font-medium text-[color:var(--ink)]">
+                Mot de passe
+                <input
+                  name="password"
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  className="h-11 rounded-xl border border-black/10 bg-white px-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-[color:var(--ring)]"
+                />
+              </label>
+
+              <div className="flex items-center justify-between text-sm text-[color:var(--muted)]">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="remember"
+                    className="h-4 w-4 rounded border-black/20 text-[color:var(--accent-2)] focus:ring-[color:var(--ring)]"
+                  />
+                  Se souvenir de moi
+                </label>
+                <span className="text-xs">Besoin d'aide ?</span>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="mt-2 flex h-12 items-center justify-center rounded-xl bg-[color:var(--accent)] text-sm font-semibold text-white shadow-[0_20px_40px_-24px_rgba(226,107,44,0.8)] transition hover:translate-y-[-1px] hover:shadow-[0_24px_50px_-22px_rgba(226,107,44,0.9)] disabled:cursor-wait disabled:opacity-70"
+              >
+                {isSubmitting ? "Connexion..." : "Entrer dans le dashboard"}
+              </button>
+            </form>
+          </div>
+
+          <p className="mt-6 text-center text-xs text-[color:var(--muted)]">
+            Derniere mise a jour: 18 fevrier 2026.
+          </p>
+        </section>
+      </div>
     </main>
   );
 }

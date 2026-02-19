@@ -1,18 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f4ef;
+  --foreground: #1b1b1f;
+  --page-bg: #f7f4ef;
+  --surface: #ffffff;
+  --panel: #efe8dd;
+  --ink: #1b1b1f;
+  --muted: #5f6068;
+  --accent: #e26b2c;
+  --accent-2: #1f7f6a;
+  --ring: rgba(31, 127, 106, 0.35);
 }
 
 html[data-theme="light"] {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f4ef;
+  --foreground: #1b1b1f;
+  --page-bg: #f7f4ef;
+  --surface: #ffffff;
+  --panel: #efe8dd;
+  --ink: #1b1b1f;
+  --muted: #5f6068;
+  --accent: #e26b2c;
+  --accent-2: #1f7f6a;
+  --ring: rgba(31, 127, 106, 0.35);
 }
 
 html[data-theme="dark"] {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #080a0e;
+  --foreground: #e8eaf0;
+  --page-bg: #080a0e;
+  --surface: #131720;   /* +niveau 1 : cartes principales */
+  --panel:   #1f2534;   /* +niveau 2 : panels intérieurs, hover, inputs */
+  --ink:     #eceef4;
+  --muted:   #8f95a8;   /* plus foncé que ink, lisible mais discret */
+  --accent:  #ff844a;
+  --accent-2:#3ecfb2;
+  --ring: rgba(62, 207, 178, 0.45);
 }
 
 @theme inline {
@@ -24,13 +48,44 @@ html[data-theme="dark"] {
 
 @media (prefers-color-scheme: dark) {
   html:not([data-theme]) {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #080a0e;
+    --foreground: #e8eaf0;
+    --page-bg: #080a0e;
+    --surface: #131720;
+    --panel:   #1f2534;
+    --ink:     #eceef4;
+    --muted:   #8f95a8;
+    --accent:  #ff844a;
+    --accent-2:#3ecfb2;
+    --ring: rgba(62, 207, 178, 0.45);
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--page-bg);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), "Space Grotesk", "IBM Plex Sans", sans-serif;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  animation: rise-in 600ms ease-out both;
+}
+
+.fade-delay-1 {
+  animation-delay: 120ms;
+}
+
+.fade-delay-2 {
+  animation-delay: 240ms;
 }
