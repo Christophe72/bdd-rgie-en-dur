@@ -325,22 +325,22 @@ export default function RgieSearchClient() {
 
   const importanceClass = (importance: string) => {
     if (importance === "critique") {
-      return "border-neutral-700 bg-neutral-700 text-white";
+      return "border-red-200 bg-red-100 text-red-800";
     }
     if (importance === "élevée") {
-      return "border-neutral-500 bg-neutral-500 text-white";
+      return "border-amber-200 bg-amber-100 text-amber-800";
     }
-    return "border-neutral-300 bg-neutral-100 text-neutral-700";
+    return "border-emerald-200 bg-emerald-100 text-emerald-800";
   };
 
   const verdictClass = (verdict: "a_preciser" | "attention" | "plutot_ok") => {
     if (verdict === "plutot_ok") {
-      return "border-neutral-700 bg-neutral-700 text-white";
+      return "border-emerald-200 bg-emerald-100 text-emerald-800";
     }
     if (verdict === "attention") {
-      return "border-neutral-500 bg-neutral-500 text-white";
+      return "border-amber-200 bg-amber-100 text-amber-800";
     }
-    return "border-neutral-300 bg-neutral-100 text-neutral-700";
+    return "border-blue-200 bg-blue-100 text-blue-800";
   };
 
   const genererGuideNovice = () => {

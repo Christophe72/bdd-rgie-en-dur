@@ -35,10 +35,10 @@ export default async function RgieDetailPage({ params }: Props) {
 
   const importanceClass =
     article.importance === "critique"
-      ? "border-neutral-700 bg-neutral-700 text-white"
+      ? "border-red-200 bg-red-100 text-red-800"
       : article.importance === "élevée"
-        ? "border-neutral-500 bg-neutral-500 text-white"
-        : "border-neutral-300 bg-neutral-100 text-neutral-700";
+        ? "border-amber-200 bg-amber-100 text-amber-800"
+        : "border-emerald-200 bg-emerald-100 text-emerald-800";
 
   return (
     <main className="mx-auto max-w-230 p-4 md:p-6">
