@@ -23,7 +23,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(clients);
   } catch (error) {
     console.error("[GET /api/clients]", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    const message =
+      process.env.NODE_ENV === "development"
+        ? error instanceof Error
+          ? error.message
+          : "Erreur serveur"
+        : "Erreur serveur";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -34,7 +40,10 @@ export async function POST(req: NextRequest) {
     const { nom, prenom, email, telephone, adresse } = body;
 
     if (!nom) {
-      return NextResponse.json({ error: "Le champ 'nom' est obligatoire" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Le champ 'nom' est obligatoire" },
+        { status: 400 },
+      );
     }
 
     const client = await prisma.client.create({
@@ -44,9 +53,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(client, { status: 201 });
   } catch (error: unknown) {
     if ((error as { code?: string }).code === "P2002") {
-      return NextResponse.json({ error: "Cet email est déjà utilisé" }, { status: 409 });
+      return NextResponse.json(
+        { error: "Cet email est déjà utilisé" },
+        { status: 409 },
+      );
     }
     console.error("[POST /api/clients]", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    const message =
+      process.env.NODE_ENV === "development"
+        ? error instanceof Error
+          ? error.message
+          : "Erreur serveur"
+        : "Erreur serveur";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
